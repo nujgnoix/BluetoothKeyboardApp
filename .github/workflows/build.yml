@@ -34,17 +34,19 @@ jobs:
     - name: Accept Android licenses
       run: yes | sdkmanager --licenses || true
 
-    - name: List installed components
-      run: sdkmanager --list
-
     - name: Make gradlew executable
       run: chmod +x gradlew
 
     - name: Build APK
-      run: ./gradlew assembleDebug --no-daemon -Pandroid.debug.obsoleteApi=true --info 2>&1 | head -200
+      run: ./gradlew assembleDebug --no-daemon -Pandroid.debug.obsoleteApi=true
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        tag_name: v1.1
+        name: Bluetooth Keyboard App v1.1
+        body: Automated build from GitHub Actions
+        files: app/build/outputs/apk/debug/app-debug.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
