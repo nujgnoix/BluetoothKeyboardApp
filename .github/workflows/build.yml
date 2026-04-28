@@ -40,13 +40,8 @@ jobs:
     - name: Build APK
       run: ./gradlew assembleDebug --no-daemon -Pandroid.debug.obsoleteApi=true
 
-    - name: Upload to Release
-      uses: softprops/action-gh-release@v1
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: v1.1
-        name: Bluetooth Keyboard App v1.1
-        body: Automated build from GitHub Actions
-        files: app/build/outputs/apk/debug/app-debug.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
