@@ -10,13 +10,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: reactnativecommunity/react-native-android:latest
-      options: --user root
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+
+    - name: Update packages
+      run: sudo apt-get update && sudo apt-get install -y wget unzip
+
+    - name: Download Android SDK
+      run: |
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -q commandlinetools-linux-11076708_latest.zip -d cmdline-tools
+        mkdir -p /opt/android-sdk/cmdline-tools
+        mv cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
+        rm -rf cmdline-tools commandlinetools-linux-11076708_latest.zip
+
+    - name: Set environment variables
+      run: |
+        echo "ANDROID_HOME=/opt/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools" >> $GITHUB_ENV
+
+    - name: Accept licenses
+      run: yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+    - name: Install SDK components
+      run: /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.0" "platform-tools"
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
 
     - name: Build APK
       run: ./gradlew assembleDebug --no-daemon
